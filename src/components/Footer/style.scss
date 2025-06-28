@@ -1,0 +1,11 @@
+.footer {
+    div {
+        svg {
+            color: rgb(165, 165, 165);
+
+            &:hover {
+                color: #111;
+            }
+        }
+    }
+}

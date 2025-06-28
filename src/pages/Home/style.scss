@@ -1,0 +1,107 @@
+.main-container {
+  width: 100%;
+  .left-section {
+    .switcher {
+      width: 100%;
+      padding: 35px 25px;
+      &:hover {
+        background-color: white;
+      }
+      &.active {
+        background-color: white;
+      }
+      img {
+        height: 35px;
+      }
+    }
+  }
+
+  .right-section {
+    padding: 25px 50px 30px;
+    width: 100%;
+    height: auto;
+    h1 {
+      font-size: 50px;
+      font-weight: 700;
+      margin-bottom: 20px;
+    }
+
+    .urls-container {
+      a {
+        color: #638eff;
+        font-size: 20px;
+
+        &:hover {
+          color: #5c8aff;
+          text-decoration: underline;
+        }
+      }
+    }
+
+    .dropzone {
+      border: 1.5px dashed rgb(211, 211, 211);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 20px;
+      height: 70%;
+      div {
+        display: flex;
+        justify-content: center;
+        p {
+          width: 70%;
+          text-align: center;
+          font-weight: 300;
+          font-size: 18px;
+          line-height: 35px;
+          color: rgb(153, 153, 153);
+          span {
+            color: #77bdff;
+            cursor: pointer;
+          }
+        }
+      }
+    }
+
+    .withFiles {
+      .dropzone {
+        width: 120px;
+        height: 120px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        .dropzone-text {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 10px;
+          svg {
+            font-size: 25px;
+            color: #638eff;
+          }
+
+          div {
+            display: flex;
+            flex-direction: column;
+            span {
+              color: #638eff;
+              font-weight: 700;
+              font-size: 15px;
+              text-align: center;
+            }
+
+            span:last-child {
+              color: rgb(156, 156, 156);
+              font-size: 12px;
+              font-weight: 400;
+            }
+          }
+        }
+
+        &:hover {
+          background-color: rgba(226, 226, 226, 0.779);
+          border: 1.5px dashed #638eff;
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,23 @@
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 45px 0;
+  .img-conatiner {
+    .logo-img {
+      height: 50px;
+    }
+  }
+
+  .list-container {
+    ul {
+      display: flex;
+      gap: 60px;
+      color: #333;
+      font-size: 14px;
+      li {
+        list-style-type: none;
+      }
+    }
+  }
+}
