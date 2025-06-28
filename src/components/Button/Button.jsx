@@ -7,7 +7,7 @@ const Button = ({ onClick, children = "Save", type = "button", disable }) => {
       type={type}
       onClick={onClick}
       disabled={disable}
-      className='btn border-2 px-22 py-3.5 text-2xl font-bold italic cursor-pointer'
+      className='btn border-2 py-3.5 text-2xl font-bold italic cursor-pointer'
     >
       {children}
     </button>

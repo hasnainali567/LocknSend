@@ -23,19 +23,19 @@ const Home = () => {
   const [value, setValue] = useState("");
   const [file, setfile] = useState([]);
   const [urls, setUrls] = useState([]);
+  const [btnText, setBtnText] = useState('Save');
+  const textAreaRef = useRef(null)
 
-  useEffect(()=>{
-    console.log(urls);
-    
-  }, [urls])
 
   async function checkIfCollectionExists(collectionName) {
     const querySnapshot = await getDocs(collection(db, collectionName));
     return !querySnapshot.empty;
   }
 
-  const saveTextBtn = async () => {
-    const urls = extractUrls(value);
+  const saveTextBtn = async (event) => {
+    if (btnText === 'Save') {
+      setBtnText('Saving...')
+      const urls = extractUrls(value);
     setUrls([...new Set(urls)]);
     let isDocExist = await checkIfCollectionExists("text");
 
@@ -48,6 +48,11 @@ const Home = () => {
         text: value,
       });
     }
+    setBtnText('Copy')
+    } else {
+      textAreaRef.current.select()
+      window.navigator.clipboard.writeText(textAreaRef.current.value)
+    }
   };
 
   useEffect(() => {
@@ -59,6 +64,7 @@ const Home = () => {
         setValue(text);
         let urls = extractUrls(text);
         setUrls([...new Set(urls)]);
+        setBtnText('Copy')
       }
     });
     return () => unsubscribe();
@@ -88,15 +94,12 @@ const Home = () => {
       })
     );
 
-    console.log(acceptedFiles);
-
     setfile((prev) => [...prev, ...base64Files]);
 
     const docRef = doc(db, "files", "shared");
     const isDocExist = await checkIfCollectionExists("files");
 
     if (isDocExist) {
-      // Add one object at a time using arrayUnion
       await updateDoc(docRef, {
         file: arrayUnion(...base64Files), // spread the array here
       });
@@ -117,14 +120,13 @@ const Home = () => {
       }
     });
 
-    return () => unsub(); // unsubscribe when unmounted or type changes
-  }, [type]); // 👈 dependency
+    return () => unsub();
+  }, [type]);
 
-  useEffect(() => {
-    console.log("Updated file state:", file);
-  }, [file]);
 
   const clearText = async () => {
+    setBtnText('Saving...')
+    setValue('')
     let isDocExist = await checkIfCollectionExists("text");
 
     if (isDocExist) {
@@ -132,6 +134,7 @@ const Home = () => {
         text: "",
       });
 
+      setBtnText('Save')
       setUrls([])
     }
   };
@@ -160,7 +163,7 @@ const Home = () => {
       {type === "text" ? (
         <div className='right-section'>
           <h1>Text</h1>
-          <TextArea value={value} onChangeText={(value) => setValue(value)} />
+          <TextArea ref={textAreaRef} value={value} onChangeText={(value) => {setValue(value); setBtnText('Save')}} />
           <div className='w-full flex justify-end py-4 gap-15'>
             {value === "" ? (
               ""
@@ -172,11 +175,12 @@ const Home = () => {
             <Button
               onClick={saveTextBtn}
               disable={value === "" ? true : false}
+              children={btnText}
             />
           </div>
-          <div className='urls-container p-4 flex flex-col gap-1'>
+          {urls.length > 0 ? <div className='urls-container p-4 flex flex-col gap-1'>
             {urls.length ? (urls.map((url, i)=> <a key={i} href={url} target="_blank">{url}</a>)): ''}
-          </div>
+          </div> : ''}
         </div>
       ) : (
         <div className='right-section'>

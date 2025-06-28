@@ -9,4 +9,9 @@
     &::placeholder {
         color: rgba($color: #000000, $alpha: .3);
     }
+
+    &::selection{
+        background-color:#638eff;
+        color: white;
+    }
 }

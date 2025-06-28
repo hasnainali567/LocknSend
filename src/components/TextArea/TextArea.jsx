@@ -1,17 +1,30 @@
-import React, {useEffect, useRef, useState} from "react";
+import React, { useEffect, useRef, forwardRef } from "react";
 import "./style.scss";
-const TextArea = ({value , onChangeText}) => {
-    const textAreaRef = useRef();
-    const resizeTextArea = (event) =>{
-        textAreaRef.current.style.height = '100px';
-        textAreaRef.current.style.height = textAreaRef.current.scrollHeight + 12 + 'px';
-    } 
 
-    useEffect(()=>{
-        resizeTextArea()
-    }, [value])
+const TextArea = forwardRef(({ value, onChangeText }, ref) => {
+  const textAreaRef = ref || useRef(); // use passed ref or create fallback
 
-  return <textarea ref={textAreaRef} value={value}  onInput={(e)=> {onChangeText(e.target.value)}} name=''className="text-area" placeholder="Type Something here..."></textarea>;
-};
+  const resizeTextArea = () => {
+    if (textAreaRef.current) {
+      textAreaRef.current.style.height = "100px";
+      textAreaRef.current.style.height =
+        textAreaRef.current.scrollHeight + 12 + "px";
+    }
+  };
+
+  useEffect(() => {
+    resizeTextArea();
+  }, [value]);
+
+  return (
+    <textarea
+      ref={textAreaRef}
+      value={value}
+      onInput={(e) => onChangeText(e.target.value)}
+      className='text-area'
+      placeholder='Type Something here...'
+    />
+  );
+});
 
 export default TextArea;
