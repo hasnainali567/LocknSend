@@ -5,6 +5,8 @@ import { default as Button } from './Button'
 import { default as Dropzone } from './Dropzone'
 import { default as FileList } from './FileList'
 import { default as Footer } from './Footer'
+import { default as PopUp } from './Popup'
+import { default as PasswordPopup } from './PasswordPopup'
 
 export {
     Header,
@@ -13,5 +15,7 @@ export {
     Button,
     Dropzone,
     FileList,
-    Footer
+    Footer,
+    PopUp,
+    PasswordPopup
 }

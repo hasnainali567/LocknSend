@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore , collection, setDoc, getDocs, doc, onSnapshot, updateDoc, arrayUnion  } from "firebase/firestore";
+import { getFirestore , collection, setDoc, getDocs, doc, onSnapshot, updateDoc, arrayUnion , getDoc } from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDXa5qAOBwIeU6moSJxRbrKqzsuDvWGQ0M",
@@ -21,5 +21,6 @@ export {
     onSnapshot,
     updateDoc,
     getDocs,
-    arrayUnion
+    arrayUnion,
+    getDoc
 }
