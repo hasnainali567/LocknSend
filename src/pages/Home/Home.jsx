@@ -123,7 +123,7 @@ const Home = () => {
   };
 
   useEffect(() => {
-    if (!docIdRef.current || isProtected) return;
+    if (!docIdRef.current || passRef.current || isProtected) return;
     const docRef = doc(db, "text", docIdRef.current);
 
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
