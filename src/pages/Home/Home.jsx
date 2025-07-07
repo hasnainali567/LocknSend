@@ -7,9 +7,9 @@ import {
   FileList,
   PopUp,
   PasswordPopup,
+  SharedUrl,
 } from "../../components";
 import { Popover } from "antd";
-import Lottie from "lottie-react";
 import CryptoJS from "crypto-js";
 import {
   db,
@@ -22,12 +22,15 @@ import {
   getDoc,
   arrayUnion,
 } from "../../config/firebaseConfig.js";
-import Text_Grey from "../../assets/text-grey.svg";
-import Text_Color from "../../assets/text-color.svg";
-import File_Grey from "../../assets/files-grey.svg";
-import File_Color from "../../assets/files-color.svg";
-import CheckedAnimation from "../../assets/lottie/Animation - 1751384305932.json";
+import { message } from "antd";
 import { FaPlus } from "react-icons/fa6";
+import {
+  LuFile,
+  LuFiles,
+  LuFileStack,
+  LuLetterText,
+  LuText,
+} from "react-icons/lu";
 
 import "./style.scss";
 import { addDoc } from "firebase/firestore";
@@ -45,6 +48,7 @@ const Home = () => {
   const [passwordPopupOpen, setPasswordPopupOpen] = useState(false);
   const [initialEncryptedText, setInitialEncryptedText] = useState(null);
   const [startListening, setStartListening] = useState(false);
+  const [messageApi, contextHolder] = message.useMessage();
   const passRef = useRef(null);
   const docIdRef = useRef(null);
   const textAreaRef = useRef(null);
@@ -54,6 +58,21 @@ const Home = () => {
   const [searchParams] = useSearchParams();
   const id = searchParams.get("id");
   const isProtected = searchParams.get("protected");
+
+  useEffect(() => {
+    const url = localStorage.getItem("Url");
+    if (url) {
+      const query = new URL(url, window.location.origin).search;
+      localStorage.removeItem("Url");
+      navigate(`/${query}`);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (shareableUrl && !id && !isProtected) {
+      localStorage.setItem("Url", shareableUrl);
+    }
+  }, [shareableUrl]);
 
   useEffect(() => {
     if (!isProtected || !id) return;
@@ -94,8 +113,24 @@ const Home = () => {
       setSavePopup(true);
       return;
     }
+
+    if (!navigator.onLine) {
+      messageApi.destroy();
+      messageApi.open({
+        type: "error",
+        content: "No internet connection!",
+      });
+      setBtnText("Save");
+      return;
+    }
+
     if (btnText === "Save") {
       try {
+        messageApi.open({
+          type: "loading",
+          content: "Saving...",
+          duration: 0,
+        });
         setBtnText("Saving...");
         const urls = extractUrls(value);
         setUrls([...new Set(urls)]);
@@ -111,18 +146,41 @@ const Home = () => {
             text: value,
           });
         }
-
+        messageApi.destroy();
+        messageApi.open({
+          type: "success",
+          content: "Saved",
+        });
         setBtnText("Copy");
       } catch (error) {
-        setBtnText('Save')
+        console.log(error);
+        setBtnText("Save");
+        messageApi.destroy();
+        messageApi.open({
+          type: "error",
+          content: "Something went wrong!",
+        });
       }
     } else if (btnText === "Copy") {
       textAreaRef.current.select();
       window.navigator.clipboard.writeText(textAreaRef.current.value);
+      messageApi.open({
+        type: "success",
+        content: "Copied",
+      });
     }
   };
 
   useEffect(() => {
+    if (!navigator.onLine) {
+      messageApi.destroy();
+      messageApi.open({
+        type: "error",
+        content: "Failed to Load No Internet! ",
+      });
+
+      return;
+    }
     if (!docIdRef.current || passRef.current || isProtected) return;
     const docRef = doc(db, "text", docIdRef.current);
 
@@ -132,7 +190,9 @@ const Home = () => {
         setValue(text);
         let urls = extractUrls(text);
         setUrls([...new Set(urls)]);
-        setBtnText("Copy");
+        if (value) {
+          setBtnText("Copy");
+        }
       }
     });
     return () => unsubscribe();
@@ -199,7 +259,6 @@ const Home = () => {
     const unsub = onSnapshot(doc(db, "files", "shared"), (docSnap) => {
       if (docSnap.exists()) {
         setfile(docSnap.data().file || []);
-        console.log(file);
       }
     });
 
@@ -207,18 +266,53 @@ const Home = () => {
   }, [type]);
 
   const clearText = async () => {
-    setBtnText("Saving...");
-    setValue("");
-    let isDocExist = await checkIfCollectionExists("text");
     let docId = docIdRef.current;
 
-    if (isDocExist) {
-      await updateDoc(doc(db, "text", docId), {
-        text: "",
+    if (!docId) {
+      setValue("");
+      setUrls([]);
+      setBtnText("Save");
+      return;
+    }
+    if (!navigator.onLine) {
+      messageApi.destroy();
+      messageApi.open({
+        type: "error",
+        content: "Failed to clear: No internet connection!",
+      });
+      return;
+    }
+
+    try {
+      setBtnText("Saving...");
+      messageApi.open({
+        type: "loading",
+        content: "Saving...",
+        duration: 0,
       });
 
-      setBtnText("Save");
-      setUrls([]);
+      let isDocExist = await checkIfCollectionExists("text");
+
+      if (isDocExist) {
+        await updateDoc(doc(db, "text", docId), {
+          text: "",
+        });
+
+        setValue("");
+        setBtnText("Save");
+        setUrls([]);
+        messageApi.destroy();
+        messageApi.open({
+          type: "success",
+          content: "Cleared Successfully",
+        });
+      }
+    } catch (error) {
+      messageApi.destroy();
+      messageApi.open({
+        type: "error",
+        content: "Error: Text not cleared.",
+      });
     }
   };
 
@@ -239,31 +333,64 @@ const Home = () => {
   }
 
   const onPopupSave = async (password) => {
-    if (password !== "") {
-      console.log(password);
-      let encryptedText = secureEncrypt(value, password);
+    try {
+      if (!navigator.onLine) {
+        messageApi.destroy();
+        messageApi.open({
+          type: "error",
+          content: "You're offline! Please connect to the internet to save.",
+        });
+        return;
+      }
 
-      let docRef = await addDoc(collection(db, "text"), {
-        text: encryptedText,
+      messageApi.destroy();
+      messageApi.open({
+        type: "loading",
+        content: "Saving...",
+        duration: 0,
       });
 
-      docIdRef.current = docRef.id;
-      passRef.current = password;
-      setShareableUrl(
-        `${window.location.origin}/?id=${docIdRef.current}&protected=true`
-      );
-    } else {
-      let docRef = await addDoc(collection(db, "text"), {
-        text: value,
-      });
+      let encryptedText;
+      let docRef;
+
+      if (password !== "") {
+        encryptedText = secureEncrypt(value, password);
+        docRef = await addDoc(collection(db, "text"), {
+          text: encryptedText,
+        });
+
+        passRef.current = password;
+        setShareableUrl(
+          `${window.location.origin}/?id=${docRef.id}&protected=true`
+        );
+      } else {
+        docRef = await addDoc(collection(db, "text"), {
+          text: value,
+        });
+
+        setShareableUrl(`${window.location.origin}/?id=${docRef.id}`);
+      }
 
       docIdRef.current = docRef.id;
-      setShareableUrl(`${window.location.origin}/?id=${docIdRef.current}`);
+
+      messageApi.destroy();
+      messageApi.open({
+        type: "success",
+        content: "Saved successfully",
+      });
+
+      setBtnText("Copy");
+      setHasSavedBefore(true);
+      setSavePopup(false);
+    } catch (error) {
+      console.error("Failed to save:", error);
+
+      messageApi.destroy();
+      messageApi.open({
+        type: "error",
+        content: "Failed to save! Please try again.",
+      });
     }
-
-    setBtnText("Copy");
-    setHasSavedBefore(true);
-    setSavePopup(false);
   };
 
   function secureEncrypt(text, password) {
@@ -328,166 +455,149 @@ const Home = () => {
       setHasSavedBefore(true);
       setPasswordPopupOpen(false);
     } catch (e) {
-      alert("Incorrect password, try again.");
+      messageApi.destroy();
+      messageApi.open({
+        type: "error",
+        content: "Incorrect Password!",
+      });
     }
   };
 
   const copyUrl = () => {
-    setPopoverContent("animation");
     window.navigator.clipboard.writeText(shareableUrl);
-
-    setTimeout(() => {
-      setPopoverContent("Copy the Url");
-    }, 2000);
   };
 
   return (
-    <div className='main-container min-h-120 bg-white shadow-2xl flex mb-10 relative'>
-      <PopUp
-        open={savePopup}
-        onClose={() => setSavePopup(false)}
-        onSave={(password) => onPopupSave(password)}
-        ref={popupSaveRef}
-      />
-      <PasswordPopup
-        open={passwordPopupOpen}
-        onSubmit={(password) => handlePasswordSubmit(password)}
-      />
-      <div className='left-section min-h-120 bg-gray-100'>
-        <div
-          className={type === "text" ? "switcher active" : "switcher"}
-          onClick={() => setType("text")}
-        >
-          <img src={type === "text" ? Text_Color : Text_Grey} alt='' />
+    <div className='main-container w-full  min-h-120 flex flex-col mb-10 '>
+      <div className='shadow-xl rounded-2xl overflow-hidden relative'>
+        {contextHolder}
+        <PopUp
+          open={savePopup}
+          onClose={() => setSavePopup(false)}
+          onSave={(password) => onPopupSave(password)}
+          ref={popupSaveRef}
+        />
+        <PasswordPopup
+          open={passwordPopupOpen}
+          onSubmit={(password) => handlePasswordSubmit(password)}
+        />
+        <div className='left-section flex sticky top-0 left-0 right-0 bg-white items-center justify-between'>
+          <div className='flex p-5 px-7'>
+            <h1 className='text-5xl font-medium uppercase'>
+              {type === "text" ? "Text" : "File"}
+            </h1>
+          </div>
+          <div className='flex'>
+            <div
+              className={type === "text" ? "switcher active" : "switcher"}
+              onClick={() => setType("text")}
+            >
+              {type === "file" ? (
+                <LuText size={40} />
+              ) : (
+                <LuLetterText size={40} className="tab-Icons" />
+              )}
+            </div>
+            <div
+              className={type === "file" ? "switcher active" : "switcher"}
+              onClick={() => setType("file")}
+            >
+              {type === "text" ? (
+                <LuFile size={40} />
+              ) : (
+                <LuFiles size={40} className="tab-Icons" />
+              )}
+            </div>
+          </div>
         </div>
-        <div
-          className={type === "file" ? "switcher active" : "switcher"}
-          onClick={() => setType("file")}
-        >
-          <img src={type === "file" ? File_Color : File_Grey} alt='' />
-        </div>
-      </div>
-      {type === "text" ? (
-        <div className='right-section'>
-          <div className='flex justify-between'>
-            <h1>Text</h1>
-            {docIdRef.current !== null ? (
-              <div className='px-5'>
-                <p className='text-md text-gray-600'>
-                  Share this URL with any one:{" "}
-                  <Popover
-                    style={{ padding: "7px" }}
-                    content={
-                      popoverContent === "animation" ? (
-                        <div className='px-6.5'>
-                          <Lottie
-                            animationData={CheckedAnimation}
-                            loop={false}
-                            style={{ width: 38, height: 38 }}
-                          />
-                        </div>
-                      ) : (
-                        <button
-                          className='hover:bg-gray-100 p-2 rounded-lg font-medium'
-                          onClick={copyUrl}
-                        >
-                          {popoverContent}
-                        </button>
-                      )
-                    }
-                    trigger='hover'
-                  >
-                    <span className='text-blue-500 cursor-pointer hover:underline text-blue-600'>
-                      {shareableUrl}
-                    </span>
-                  </Popover>
-                </p>
-                {passRef.current !== null ? (
-                  <p className='text-md text-gray-400'>
-                    Also Share the Password
-                  </p>
-                ) : (
-                  ""
-                )}
+        {type === "text" ? (
+          <div className='right-section px-9 rounded-b-2xl bg-white'>
+            <TextArea
+              ref={textAreaRef}
+              value={value}
+              onChangeText={(value) => {
+                setValue(value);
+                setBtnText("Save");
+              }}
+            />
+
+            <div className='w-full flex justify-end gap-15'>
+              {value === "" ? (
+                ""
+              ) : (
+                <button className='px-5 cursor-pointer' onClick={clearText}>
+                  clear
+                </button>
+              )}
+              <Button
+                onClick={() => {
+                  saveTextBtn();
+                }}
+                disable={value === "" ? true : false}
+                children={btnText}
+              />
+            </div>
+            {urls.length > 0 ? (
+              <div className='urls-container flex flex-col gap-1'>
+                {urls.length
+                  ? urls.map((url, i) => (
+                      <a key={i} href={url} target='_blank'>
+                        {url}
+                      </a>
+                    ))
+                  : ""}
               </div>
             ) : (
               ""
             )}
           </div>
-          <TextArea
-            ref={textAreaRef}
-            value={value}
-            onChangeText={(value) => {
-              setValue(value);
-              setBtnText("Save");
-            }}
-          />
-          <div className='w-full flex justify-end py-4 gap-15'>
-            {value === "" ? (
-              ""
-            ) : (
-              <button className='px-5 cursor-pointer' onClick={clearText}>
-                clear
-              </button>
-            )}
-            <Button
-              onClick={() => {
-                saveTextBtn();
-              }}
-              disable={value === "" ? true : false}
-              children={btnText}
-            />
-          </div>
-          {urls.length > 0 ? (
-            <div className='urls-container p-4 flex flex-col gap-1'>
-              {urls.length
-                ? urls.map((url, i) => (
-                    <a key={i} href={url} target='_blank'>
-                      {url}
-                    </a>
-                  ))
-                : ""}
-            </div>
-          ) : (
-            ""
-          )}
-        </div>
-      ) : (
-        <div className='right-section'>
-          <h1>Files</h1>
-          {file.length ? (
-            <div className='withFiles flex flex-wrap'>
-              <FileList files={file} onDrop={onDrop} />
-              <Dropzone
-                onDrop={onDrop}
-                className='dropzone'
-                title={
-                  <div className='dropzone-text'>
-                    <FaPlus />
-                    <div>
-                      <span>Add File</span>
-                      <span>(upto 5 Mb )</span>
+        ) : (
+          <div className='right-section px-9'>
+            {file.length ? (
+              <div className='withFiles flex flex-wrap min-h-70'>
+                <FileList files={file} onDrop={onDrop} />
+                <Dropzone
+                  onDrop={onDrop}
+                  className='dropzone'
+                  title={
+                    <div className='dropzone-text'>
+                      <FaPlus />
+                      <div>
+                        <span>Add File</span>
+                        <span>(upto 5 Mb )</span>
+                      </div>
                     </div>
-                  </div>
+                  }
+                />
+              </div>
+            ) : (
+              <Dropzone
+                className='dropzone min-h-74'
+                onDrop={(file) => {
+                  onDrop(file);
+                }}
+                title={
+                  <p>
+                    Drag and drop any files up to 2 files, 5Mbs each or{" "}
+                    <span className=''>Browse Upgrade</span> to get more space
+                  </p>
                 }
               />
-            </div>
-          ) : (
-            <Dropzone
-              className='dropzone'
-              onDrop={(file) => {
-                onDrop(file);
-              }}
-              title={
-                <p>
-                  Drag and drop any files up to 2 files, 5Mbs each or{" "}
-                  <span className=''>Browse Upgrade</span> to get more space
-                </p>
-              }
-            />
-          )}
-        </div>
-      )}
+            )}
+          </div>
+        )}
+      </div>
+      <div>
+        {docIdRef.current ? (
+          <SharedUrl
+            copyUrl={copyUrl}
+            popoverContent={popoverContent}
+            shareableUrl={shareableUrl}
+          />
+        ) : (
+          ""
+        )}
+      </div>
     </div>
   );
 };

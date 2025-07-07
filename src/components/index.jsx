@@ -7,6 +7,9 @@ import { default as FileList } from './FileList'
 import { default as Footer } from './Footer'
 import { default as PopUp } from './Popup'
 import { default as PasswordPopup } from './PasswordPopup'
+import { default as SharedUrl } from './SharedUrl'
+import { default as ThemeBtn } from './Theme'
+
 
 export {
     Header,
@@ -17,5 +20,7 @@ export {
     FileList,
     Footer,
     PopUp,
-    PasswordPopup
+    PasswordPopup,
+    SharedUrl,
+    ThemeBtn
 }

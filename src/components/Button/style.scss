@@ -1,36 +1,24 @@
 .btn {
-  border: 2px solid black;
+  background-color: #F6F0EB;
   border-image-slice: 1;
   transition: all 0.3s ease;
-  width: 232px;
-  max-width: 232px;
 
   &:hover {
-    border-image-source: linear-gradient(to bottom, #864bff, #5082ff);
-
-    background: linear-gradient(to bottom, #864bff, #5082ff);
-    background-clip: text;
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    text-shadow: 0 2px 2px rgba(134, 75, 255, 0.8);
   } 
 
   &:active {
-    background-clip:unset;
-    -webkit-text-fill-color: white;
-    -webkit-background-clip: none;
-    color: white;
-    text-shadow: none;
   }
 
   &:disabled,
   &:disabled:hover {
-    border-color: #c8c8c8aa;
-    color: #c8c8c8aa;
+    background: rgb(219, 219, 219);
+    color: #F7F1EC;
     cursor: not-allowed;
-    background: transparent;
-    -webkit-text-fill-color: initial;
-    text-shadow: none;
-    border-image-source: none;
+  }
+}
+
+.dark {
+  .btn {
+    background-color: #77bdff;
   }
 }
