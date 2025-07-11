@@ -31,3 +31,20 @@
         }
     }
 }
+
+.dark {
+    .files {
+        color: white;
+        background: #111;
+        &:hover {
+            background-color: #222;
+        }
+
+        .file-name {
+            color: white;
+            strong {
+                color: white;
+            }
+        }
+    }
+}

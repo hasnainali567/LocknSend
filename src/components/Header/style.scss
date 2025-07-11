@@ -24,6 +24,11 @@
       font-size: 14px;
       li {
         list-style-type: none;
+        transition: all ease;
+        &:hover {
+          color: rgb(160, 138, 119);
+          transform: scale(1.05);
+        }
       }
     }
   }
@@ -34,6 +39,9 @@
       ul {
         li {
           color: white;
+          &:hover {
+            color: #77bdff;
+          }
         }
       }
     }

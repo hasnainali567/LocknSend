@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import {
   TextArea,
@@ -9,7 +9,6 @@ import {
   PasswordPopup,
   SharedUrl,
 } from "../../components";
-import { Popover } from "antd";
 import CryptoJS from "crypto-js";
 import {
   db,
@@ -24,15 +23,10 @@ import {
 } from "../../config/firebaseConfig.js";
 import { message } from "antd";
 import { FaPlus } from "react-icons/fa6";
-import {
-  LuFile,
-  LuFiles,
-  LuFileStack,
-  LuLetterText,
-  LuText,
-} from "react-icons/lu";
+import { LuFile, LuFiles, LuLetterText, LuText } from "react-icons/lu";
 
 import "./style.scss";
+import { useSaving } from "../../context/SavingContext.jsx";
 import { addDoc } from "firebase/firestore";
 
 const Home = () => {
@@ -48,6 +42,7 @@ const Home = () => {
   const [passwordPopupOpen, setPasswordPopupOpen] = useState(false);
   const [initialEncryptedText, setInitialEncryptedText] = useState(null);
   const [startListening, setStartListening] = useState(false);
+  const { saving, setSaving } = useSaving();
   const [messageApi, contextHolder] = message.useMessage();
   const passRef = useRef(null);
   const docIdRef = useRef(null);
@@ -138,13 +133,27 @@ const Home = () => {
 
         if (passRef.current !== null) {
           let encryptedText = secureEncrypt(value, passRef.current);
-          await updateDoc(doc(db, "text", docId), {
-            text: encryptedText,
-          });
+          if (file) {
+            await updateDoc(doc(db, "text", docId), {
+              text: encryptedText,
+              file: file,
+            });
+          } else {
+            await updateDoc(doc(db, "text", docId), {
+              text: encryptedText,
+            });
+          }
         } else {
-          await updateDoc(doc(db, "text", docId), {
-            text: value,
-          });
+          if (file) {
+            await updateDoc(doc(db, "text", docId), {
+              text: value,
+              file: file,
+            });
+          } else {
+            await updateDoc(doc(db, "text", docId), {
+              text: value,
+            });
+          }
         }
         messageApi.destroy();
         messageApi.open({
@@ -172,6 +181,12 @@ const Home = () => {
   };
 
   useEffect(() => {
+    if (!file) return;
+
+    setBtnText("Save");
+  }, [file]);
+
+  useEffect(() => {
     if (!navigator.onLine) {
       messageApi.destroy();
       messageApi.open({
@@ -186,8 +201,12 @@ const Home = () => {
 
     const unsubscribe = onSnapshot(docRef, (docSnap) => {
       if (docSnap.exists()) {
+        console.log(docSnap.data());
+
         let text = docSnap.data().text;
         setValue(text);
+        let file = docSnap.data().file;
+        setfile(file);
         let urls = extractUrls(text);
         setUrls([...new Set(urls)]);
         if (value) {
@@ -209,6 +228,8 @@ const Home = () => {
         setValue(decrypted);
         setUrls([...new Set(extractUrls(decrypted))]);
         setBtnText("Copy");
+        let file = docSnap.data().file;
+        setfile(file);
       }
     });
     return () => unsubscribe();
@@ -226,6 +247,12 @@ const Home = () => {
   };
 
   const onDrop = async (acceptedFiles) => {
+    messageApi.destroy();
+    messageApi.open({
+      type: "info",
+      content: "Don't Forget to save!",
+      duration: 3,
+    });
     const base64Files = await Promise.all(
       acceptedFiles.map(async (file) => {
         const base64 = await convertToBase64(file);
@@ -233,37 +260,38 @@ const Home = () => {
           name: file.name,
           type: file.type,
           size: file.size,
+          file: base64,
         };
       })
     );
 
     setfile((prev) => [...prev, ...base64Files]);
 
-    const docRef = doc(db, "files", "shared");
-    const isDocExist = await checkIfCollectionExists("files");
+    // const docRef = doc(db, "files", "shared");
+    // const isDocExist = await checkIfCollectionExists("files");
 
-    if (isDocExist) {
-      await updateDoc(docRef, {
-        file: arrayUnion(...base64Files), // spread the array here
-      });
-    } else {
-      await setDoc(docRef, {
-        file: base64Files, // this should be a flat array of pure objects
-      });
-    }
+    // if (isDocExist) {
+    //   await updateDoc(docRef, {
+    //     file: arrayUnion(...base64Files), // spread the array here
+    //   });
+    // } else {
+    //   await setDoc(docRef, {
+    //     file: base64Files, // this should be a flat array of pure objects
+    //   });
+    // }
   };
 
-  useEffect(() => {
-    if (type !== "file") return;
+  // useEffect(() => {
+  //   if (type !== "file") return;
 
-    const unsub = onSnapshot(doc(db, "files", "shared"), (docSnap) => {
-      if (docSnap.exists()) {
-        setfile(docSnap.data().file || []);
-      }
-    });
+  //   const unsub = onSnapshot(doc(db, "files", "shared"), (docSnap) => {
+  //     if (docSnap.exists()) {
+  //       setfile(docSnap.data().file || []);
+  //     }
+  //   });
 
-    return () => unsub();
-  }, [type]);
+  //   return () => unsub();
+  // }, [type]);
 
   const clearText = async () => {
     let docId = docIdRef.current;
@@ -333,6 +361,7 @@ const Home = () => {
   }
 
   const onPopupSave = async (password) => {
+    setSaving(true);
     try {
       if (!navigator.onLine) {
         messageApi.destroy();
@@ -340,6 +369,8 @@ const Home = () => {
           type: "error",
           content: "You're offline! Please connect to the internet to save.",
         });
+
+        setSaving(false);
         return;
       }
 
@@ -355,18 +386,32 @@ const Home = () => {
 
       if (password !== "") {
         encryptedText = secureEncrypt(value, password);
-        docRef = await addDoc(collection(db, "text"), {
-          text: encryptedText,
-        });
+        if (file) {
+          docRef = await addDoc(collection(db, "text"), {
+            text: encryptedText,
+            file: file,
+          });
+        } else {
+          docRef = await addDoc(collection(db, "text"), {
+            text: encryptedText,
+          });
+        }
 
         passRef.current = password;
         setShareableUrl(
           `${window.location.origin}/?id=${docRef.id}&protected=true`
         );
       } else {
-        docRef = await addDoc(collection(db, "text"), {
-          text: value,
-        });
+        if (file) {
+          docRef = await addDoc(collection(db, "text"), {
+            text: value,
+            file: file,
+          });
+        } else {
+          docRef = await addDoc(collection(db, "text"), {
+            text: value,
+          });
+        }
 
         setShareableUrl(`${window.location.origin}/?id=${docRef.id}`);
       }
@@ -382,7 +427,9 @@ const Home = () => {
       setBtnText("Copy");
       setHasSavedBefore(true);
       setSavePopup(false);
+      setSaving(false);
     } catch (error) {
+      setSaving(false);
       console.error("Failed to save:", error);
 
       messageApi.destroy();
@@ -495,7 +542,7 @@ const Home = () => {
               {type === "file" ? (
                 <LuText size={40} />
               ) : (
-                <LuLetterText size={40} className="tab-Icons" />
+                <LuLetterText size={40} className='tab-Icons' />
               )}
             </div>
             <div
@@ -505,7 +552,7 @@ const Home = () => {
               {type === "text" ? (
                 <LuFile size={40} />
               ) : (
-                <LuFiles size={40} className="tab-Icons" />
+                <LuFiles size={40} className='tab-Icons' />
               )}
             </div>
           </div>
@@ -521,11 +568,14 @@ const Home = () => {
               }}
             />
 
-            <div className='w-full flex justify-end gap-15'>
+            <div className='w-full flex justify-end gap-5'>
               {value === "" ? (
                 ""
               ) : (
-                <button className='px-5 cursor-pointer' onClick={clearText}>
+                <button
+                  className='clear-btn px-15 cursor-pointer rounded-lg text-lg capitalize hover:scale-102'
+                  onClick={clearText}
+                >
                   clear
                 </button>
               )}

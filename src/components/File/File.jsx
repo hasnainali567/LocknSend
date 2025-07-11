@@ -3,6 +3,7 @@ import { FaFileAlt, FaJs, FaHtml5, FaCss3Alt, FaFilePdf } from "react-icons/fa";
 import "./style.scss";
 
 const File = ({ file }) => {
+  
   const [isImage, setIsImage] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -40,7 +41,7 @@ const File = ({ file }) => {
         </div>
       ) : isImage ? (
         <div className='img-file'>
-          <img src={file.base64} alt={file.name} />
+          <img src={file.file} alt={file.name} />
         </div>
       ) : (
         <div className='files'>

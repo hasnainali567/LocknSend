@@ -1,0 +1,26 @@
+.dark {
+  .ant-modal-content {
+    background: rgb(26, 26, 26) !important;
+    .pass-popup-title {
+      color: white !important;
+      background-color: rgb(26, 26, 26);
+    }
+
+    .ant-input-affix-wrapper {
+      &:hover {
+        border-color: #333 !important;
+      }
+
+      &.ant-input-affix-wrapper-focused {
+        border-color: #77bdff !important;
+        box-shadow: 0 0 0 2px rgba(119, 189, 255, 0.2); // optional nice glow
+      }
+    }
+
+    .ant-input-suffix {
+      svg {
+        color: white;
+      }
+    }
+  }
+}

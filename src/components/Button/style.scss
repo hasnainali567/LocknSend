@@ -1,18 +1,25 @@
 .btn {
-  background-color: #F6F0EB;
-  border-image-slice: 1;
+  background-color: #f6f0eb;
   transition: all 0.3s ease;
+  transition: scale 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+    0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
   &:hover {
-  } 
+    transform: scale(1.02);
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+      0 2px 4px -1px rgba(0, 0, 0, 0.06); // shadow-md
+  }
 
   &:active {
+    transform: scale(1);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); // shadow-sm
   }
 
   &:disabled,
   &:disabled:hover {
     background: rgb(219, 219, 219);
-    color: #F7F1EC;
+    color: #f7f1ec;
     cursor: not-allowed;
   }
 }
@@ -20,5 +27,28 @@
 .dark {
   .btn {
     background-color: #77bdff;
+    box-shadow: 0 10px 15px -3px rgba(119, 189, 255, 0.3),
+      0 4px 6px -2px rgba(119, 189, 255, 0.2); // shadow-lg for dark mode
+    
+      transition: all .3s ease;
+      transition: scale .15s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+
+    &:hover {
+      box-shadow: 0 4px 6px -1px rgba(119, 189, 255, 0.25),
+        0 2px 4px -1px rgba(119, 189, 255, 0.15); // shadow-md
+    }
+
+    &:active {
+      box-shadow: 0 1px 2px 0 rgba(119, 189, 255, 0.15); // shadow-sm
+    }
+
+    &:disabled,
+    &:disabled:hover {
+      background: rgb(219, 219, 219);
+      color: #f7f1ec;
+      cursor: not-allowed;
+      box-shadow: none;
+      transform: none;
+    }
   }
 }

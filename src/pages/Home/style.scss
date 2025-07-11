@@ -1,40 +1,15 @@
-.dark {
-  .left-section {
-    background: #090c11;
-    .switcher {
-      &:hover {
-        background-color: #333;
-      }
-
-      .tab-Icons {
-        color: #77bdff !important;
-      }
-    }
-  }
-  .right-section {
-    background-color: #090c11 !important;
-    .withFiles {
-      .dropzone {
-        &:hover {
-          background-color: #333 !important;
-          border-color: #77bdff !important;
-        }
-      }
-    }
-  }
-}
-
 .main-container {
   width: 100%;
   .left-section {
     .switcher {
+      cursor: pointer;
       width: max-content;
       padding: 30px;
       img {
         height: 35px;
       }
       .tab-Icons {
-        color: rgb(226, 220, 215);
+        color: rgb(160, 138, 119);
       }
     }
   }
@@ -48,6 +23,12 @@
       font-size: 50px;
       font-weight: 700;
       margin-bottom: 20px;
+    }
+
+    div {
+      .clear-btn {
+        background-color: #c9c9c9;
+      }
     }
 
     .urls-container {
@@ -69,7 +50,7 @@
       justify-content: center;
       align-items: center;
       margin-bottom: 20px;
-      
+
       div {
         display: flex;
         justify-content: center;
@@ -101,14 +82,14 @@
           gap: 10px;
           svg {
             font-size: 25px;
-            color: #77bdff;
+            color: rgb(160, 138, 119);
           }
 
           div {
             display: flex;
             flex-direction: column;
             span {
-              color: #77bdff;
+              color: rgb(160, 138, 119);
               font-weight: 700;
               font-size: 15px;
               text-align: center;
@@ -125,6 +106,50 @@
         &:hover {
           background-color: rgba(226, 226, 226, 0.779);
           border: 1.5px dashed #638eff;
+        }
+      }
+    }
+  }
+}
+
+.dark {
+  .left-section {
+    background: #090c11;
+    .switcher {
+      cursor: pointer;
+      &:hover {
+        background-color: #333;
+      }
+
+      .tab-Icons {
+        color: #77bdff !important;
+      }
+    }
+  }
+  .right-section {
+    div {
+      .clear-btn {
+        background-color: #3333339c;
+      }
+    }
+    background-color: #090c11 !important;
+    .withFiles {
+      .dropzone {
+        &:hover {
+          background-color: #333 !important;
+          border-color: #77bdff !important;
+        }
+
+        .dropzone-text {
+          svg {
+            color: #77bdff;
+          }
+
+          div {
+            span {
+              color: #77bdff;
+            }
+          }
         }
       }
     }

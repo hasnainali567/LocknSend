@@ -3,18 +3,13 @@ import LOGO from '../../assets/Logo.png'
 import "./style.scss";
 import { Link } from "react-router-dom";
 import ThemeBtn from "../Theme";
+import { useTheme } from "../../context/ThemeContext.jsx";
 
 const Header = () => {
-  const [theme, setTheme] = useState('light');
-  const themeToggle = () => {
-    if (theme === 'light') {
-      setTheme('dark')
-      window.document.body.classList.add('dark')
-    } else {
-      setTheme('light')
-      window.document.body.classList.remove('dark')
-    }
-  }
+
+  const { isDark, toggleTheme} = useTheme();
+  
+  
   return (
     <div className='header w-full'>
       <div className="img-conatiner">
@@ -29,7 +24,7 @@ const Header = () => {
                 <Link to={'/feedback'}>Feedback</Link>
             </li>
             <li>
-              <ThemeBtn theme={theme} themeToggle={themeToggle} />
+              <ThemeBtn theme={isDark} themeToggle={toggleTheme} />
             </li>
         </ul>
       </div>

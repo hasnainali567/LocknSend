@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Modal, Input, Button } from "antd";
+import './style.scss'
 
 const PasswordPopup = ({ open, onSubmit }) => {
   const [password, setPassword] = useState("");
@@ -7,7 +8,7 @@ const PasswordPopup = ({ open, onSubmit }) => {
   return (
     <Modal
       open={open}
-      title="Enter Password"
+      title={<p className="pass-popup-title">Enter Password</p>}
       closable={false}
       footer={null}
     >
